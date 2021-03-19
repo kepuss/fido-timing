@@ -1,0 +1,121 @@
+{
+  "testapp1_com:8443": {
+    "name": "test",
+    "registered": true,
+    "id": "aCKhG7T2safqy1DSSvxulWbvE0ubVwIpTz-1Ffd6p8k",
+    "authenticators": [
+      {
+        "fmt": "fido-u2f",
+        "publicKey": "BGb2-1gQYbHQC6-05m2QvUO_xcDxjduH476tBbwi745jd3SsUKmSyqO8_bqbZe8_JDONnvigTQPT4uNxyiTRDQ4",
+        "counter": 16903,
+        "credID": "hSBLeKOGO0f3U3vvIUiDSkL46GXrV9S0tWuHu4U9mubuNsaxdLb2mtcf_LX0nZ6HcTyFLBDb3rmPbh1PNWO8BEJvcOLpKpCiC4BvF7DrH0t3RO9MjfVv_u3n6nd9YOni"
+      }
+    ]
+  },
+  "testapp2_com:8444": {
+    "name": "test",
+    "registered": true,
+    "id": "Z3blFBOXRe_Zn_-Y6M6VxMcQvtglDBAppjROh7mJsCM",
+    "authenticators": [
+      {
+        "fmt": "fido-u2f",
+        "publicKey": "BDDmuku8b7Q4DAiYbhKg7wzBHwa07JAbaMeP_Mx4x-lxm2-K429FpRUgUJuTAyuPGphnzxALQR0PBpNhSIS9Flk",
+        "counter": 0,
+        "credID": "4FRRKZjNOitsUUWxgXYLdoQk6-_rt6QF89Ql9vLKaCh9kLIYtOPuOJOikEtTh_IQjDXBQGbJ09_OcrECzRcxwrMSYzFvDVw52h0m6Mce0fvuvomeINZxiG_iMXtA3j6g"
+      }
+    ]
+  },
+  "data": [
+    {
+      "time": 54058.12500000134,
+      "RANDOM_KEYS": 0,
+      "DIFFERENT_ORIGIN_KEYS": 1000,
+      "ADD_CORRECT_KEY": true,
+      "timestamp": "2021-03-18T23:45:36.174Z"
+    },
+    {
+      "time": 51978.20000000138,
+      "RANDOM_KEYS": 0,
+      "DIFFERENT_ORIGIN_KEYS": 1000,
+      "ADD_CORRECT_KEY": true,
+      "timestamp": "2021-03-18T23:47:33.498Z"
+    },
+    {
+      "time": 54857.659999999654,
+      "RANDOM_KEYS": 0,
+      "DIFFERENT_ORIGIN_KEYS": 1000,
+      "ADD_CORRECT_KEY": true,
+      "timestamp": "2021-03-19T00:10:01.431Z"
+    },
+    {
+      "time": 2029.740000001766,
+      "RANDOM_KEYS": 0,
+      "DIFFERENT_ORIGIN_KEYS": 1000,
+      "CORRECT_KEYS": 1,
+      "timestamp": "2021-03-19T02:47:35.939Z"
+    },
+    {
+      "time": 5150.539999998728,
+      "RANDOM_KEYS": 0,
+      "DIFFERENT_ORIGIN_KEYS": 1000,
+      "CORRECT_KEYS": 1,
+      "timestamp": "2021-03-19T02:47:47.018Z"
+    },
+    {
+      "time": 1149.600000000646,
+      "RANDOM_KEYS": 0,
+      "DIFFERENT_ORIGIN_KEYS": 1000,
+      "CORRECT_KEYS": 1,
+      "timestamp": "2021-03-19T02:51:08.972Z"
+    },
+    {
+      "time": 773.3000000007451,
+      "RANDOM_KEYS": 0,
+      "DIFFERENT_ORIGIN_KEYS": 1000,
+      "CORRECT_KEYS": 1,
+      "timestamp": "2021-03-19T02:51:10.856Z"
+    },
+    {
+      "time": 5247.71999999939,
+      "RANDOM_KEYS": 0,
+      "DIFFERENT_ORIGIN_KEYS": 1000,
+      "CORRECT_KEYS": 1,
+      "timestamp": "2021-03-19T02:51:21.731Z"
+    },
+    {
+      "time": 5994.56999999893,
+      "RANDOM_KEYS": 0,
+      "DIFFERENT_ORIGIN_KEYS": 1000,
+      "CORRECT_KEYS": 1,
+      "timestamp": "2021-03-19T02:51:38.617Z"
+    },
+    {
+      "time": 51524.45500000249,
+      "RANDOM_KEYS": 0,
+      "DIFFERENT_ORIGIN_KEYS": 1000,
+      "CORRECT_KEYS": 1,
+      "timestamp": "2021-03-19T02:52:37.957Z"
+    },
+    {
+      "time": 41999.885000001086,
+      "RANDOM_KEYS": 0,
+      "DIFFERENT_ORIGIN_KEYS": 1000,
+      "CORRECT_KEYS": 1,
+      "timestamp": "2021-03-19T02:53:29.305Z"
+    },
+    {
+      "time": 6112.699999999255,
+      "RANDOM_KEYS": 0,
+      "DIFFERENT_ORIGIN_KEYS": 1000,
+      "CORRECT_KEYS": 1,
+      "timestamp": "2021-03-19T07:53:03.651Z"
+    },
+    {
+      "time": 5113.095000002533,
+      "RANDOM_KEYS": 0,
+      "DIFFERENT_ORIGIN_KEYS": 1000,
+      "CORRECT_KEYS": 1,
+      "timestamp": "2021-03-19T07:53:16.821Z"
+    }
+  ]
+}
