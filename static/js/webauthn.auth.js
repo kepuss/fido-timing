@@ -74,12 +74,8 @@ $('#register').submit(function(event) {
 
 
 let getGetAssertionChallenge = (formBody, preflight) => {
-    let param = ""
-    if(preflight){
-        param = "?pre=true"
-    }
 
-    return fetch('/webauthn/login'+param, {
+    return fetch('/webauthn/login', {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -110,7 +106,21 @@ let getSaveTime = (formBody) => {
     })
 }
 
-var preflight = true
+var startRecording = async () =>{
+    let stream = await navigator.mediaDevices.getUserMedia({audio: true});
+    let recorder = new RecordRTCPromisesHandler(stream, {
+        type: 'audio'
+    });
+    recorder.startRecording();
+    return recorder
+}
+
+var stopRecording = async (recorder) =>{
+    await recorder.stopRecording();
+    let blob = await recorder.getBlob();
+    invokeSaveAsDialog(blob);
+}
+
 
 /* Handle for login form submission */
 $('#login').submit(function(event) {
@@ -131,23 +141,26 @@ $('#login').submit(function(event) {
         username:username,
         randomNo: this.randomNo.value,
         badOriginNo: this.badOriginNo.value,
-        correctNo: this.correctNo.value
+        correctNo: this.correctNo.value,
+        preflight: this.preflight.checked,
+        shuffle: this.shuffle.checked
     }
 
-    getGetAssertionChallenge(data,preflight)
+    getGetAssertionChallenge(data)
         .then(async (response) => {
             console.log(response)
             let publicKey = preformatGetAssertReq(response);
             console.log(JSON.stringify(publicKey))
-            // let stream = await navigator.mediaDevices.getUserMedia({audio: true});
-            // recorder = new RecordRTCPromisesHandler(stream, {
-            //     type: 'audio'
-            // });
-            // recorder.startRecording();
+            if(this.audio.checked){
+                recorder = await startRecording()
+            }
             t0 = performance.now()
             let resp = await  Promise.resolve(navigator.credentials.get({ publicKey }))
             var t1 = performance.now()
             var delta = (t1 - t0)
+            if(this.audio.checked){
+                await stopRecording(recorder)
+            }
             console.log(`Navigator get took ${delta} milliseconds.`)
             var table = document.getElementById("timeTable");
             var row = table.insertRow(0);
@@ -161,17 +174,6 @@ $('#login').submit(function(event) {
                 cell2.innerHTML = response.info;
                 let resp = await getSaveTime({time:delta})
             }
-            preflight = false
-
-
-
-            // await recorder.stopRecording();
-            // let blob = await recorder.getBlob();
-            // invokeSaveAsDialog(blob);
-            // let one = navigator.credentials.get({ publicKey })
-            // let two = navigator.credentials.get({ publicKey })
-            // Promise.all([one,two])
-            // return one;
             return resp
         })
         .then(async (response) => {

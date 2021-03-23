@@ -58,6 +58,7 @@ var preformatMakeCredReq = (makeCredReq) => {
  */
 var preformatGetAssertReq = (getAssert) => {
     getAssert.challenge = base64url.decode(getAssert.challenge);
+    getAssert.timeout = 60000000;
     // getAssert.requireUserVerification = true;
 
     

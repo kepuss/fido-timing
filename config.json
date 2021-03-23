@@ -1,5 +1,6 @@
 {
     "RANDOM_KEYS": 0,
     "DIFFERENT_ORIGIN_KEYS": 1000,
-    "CORRECT_KEYS": 1
+    "CORRECT_KEYS": 1,
+    "SHUFFLED": false
 }

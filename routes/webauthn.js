@@ -70,18 +70,21 @@ router.post('/login', (request, response) => {
 
         return
     }
+
     let getAssertion={}
-    if(request.query.pre) {
+    if(request.body.preflight ) {
         getAssertion = utils.generateDifferentOriginUserAuthenticators(database, username, {
             "RANDOM_KEYS": 0,
             "DIFFERENT_ORIGIN_KEYS": 0,
-            "CORRECT_KEYS": 1
+            "CORRECT_KEYS": 1,
+            "SHUFFLED":false
         })
     }else {
         let requestConfig = {
             "RANDOM_KEYS": request.body.randomNo || config.RANDOM_KEYS,
             "DIFFERENT_ORIGIN_KEYS": request.body.badOriginNo || config.DIFFERENT_ORIGIN_KEYS,
-            "CORRECT_KEYS": request.body.correctNo || config.CORRECT_KEY
+            "CORRECT_KEYS": request.body.correctNo || config.CORRECT_KEY,
+            "SHUFFLED": request.body.shuffle  || config.SHUFFLED
         }
         getAssertion = utils.generateDifferentOriginUserAuthenticators(database, username, requestConfig)
     }
