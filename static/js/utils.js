@@ -1,3 +1,16 @@
+
+
+function _arrayBufferToBase64( buffer ) {
+    var binary = '';
+    var bytes = new Uint8Array( buffer );
+    var len = bytes.byteLength;
+    for (var i = 0; i < len; i++) {
+        binary += String.fromCharCode( bytes[ i ] );
+    }
+    return window.btoa( binary );
+}
+
+
 /**
  * Converts PublicKeyCredential into serialised JSON
  * @param  {Object} pubKeyCred
@@ -14,6 +27,7 @@ var publicKeyCredentialToJSON = (pubKeyCred) => {
 
     if(pubKeyCred instanceof ArrayBuffer) {
         return base64url.encode(pubKeyCred)
+        //return _arrayBufferToBase64(pubKeyCred)
     }
 
     if(pubKeyCred instanceof Object) {
@@ -43,12 +57,25 @@ var generateRandomBuffer = (len) => {
     return randomBuffer
 }
 
+function _base64ToArrayBuffer(base64) {
+    var binary_string = window.atob(base64);
+    var len = binary_string.length;
+    var bytes = new Uint8Array(len);
+    for (var i = 0; i < len; i++) {
+        bytes[i] = binary_string.charCodeAt(i);
+    }
+    return bytes.buffer;
+}
+
 /**
  * Decodes arrayBuffer required fields.
  */
 var preformatMakeCredReq = (makeCredReq) => {
     makeCredReq.challenge = base64url.decode(makeCredReq.challenge);
     makeCredReq.user.id = base64url.decode(makeCredReq.user.id);
+    delete makeCredReq.rp.id
+    // makeCredReq.challenge = _base64ToArrayBuffer(makeCredReq.challenge);
+    // makeCredReq.user.id = _base64ToArrayBuffer(makeCredReq.user.id);
 
     return makeCredReq
 }
@@ -58,12 +85,13 @@ var preformatMakeCredReq = (makeCredReq) => {
  */
 var preformatGetAssertReq = (getAssert) => {
     getAssert.challenge = base64url.decode(getAssert.challenge);
-    getAssert.timeout = 60000000;
-    // getAssert.requireUserVerification = true;
-
+    // getAssert.challenge = _base64ToArrayBuffer(getAssert.challenge);
+    getAssert.timeout = 600000;
+    getAssert.rpId = getAssert.rpId.split(":")[0]
     
     for(let allowCred of getAssert.allowCredentials) {
         allowCred.id = base64url.decode(allowCred.id);
+        // allowCred.id = _base64ToArrayBuffer(allowCred.id);
     }
 
     // addIncorrectAllowedCredentialsMiddle(getAssert.allowCredentials)

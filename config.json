@@ -2,5 +2,10 @@
     "RANDOM_KEYS": 0,
     "DIFFERENT_ORIGIN_KEYS": 1000,
     "CORRECT_KEYS": 1,
-    "SHUFFLED": false
+    "BROKEN_KEYS": 0,
+    "RANDOM_BYTES": 64,
+    "SHUFFLED": false,
+    "mode":"web",
+    "app1":"app1_com:8443",
+    "app2":"app2_com:8444"
 }

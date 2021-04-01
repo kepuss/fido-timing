@@ -10,6 +10,7 @@ const config        = require('./config.json');
 const defaultroutes = require('./routes/default');
 const passwordauth  = require('./routes/password');
 const webuathnauth  = require('./routes/webauthn.js');
+const session = require('express-session');
 
 var fs = require('fs');
 var http = require('http');
@@ -20,12 +21,11 @@ const app           = express();
 app.use(bodyParser.json());
 
 /* ----- session ----- */
-app.use(cookieSession({
-  name: 'session',
-  keys: [crypto.randomBytes(32).toString('hex')],
-
-  // Cookie Options
-  maxAge: 24 * 60 * 60 * 1000 // 24 hours
+app.use(session({
+    secret: 'keyboard cat',
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: false }
 }))
 app.use(cookieParser())
 
@@ -52,12 +52,20 @@ const app1           = express();
 app1.use(bodyParser.json());
 
 /* ----- session ----- */
-app1.use(cookieSession({
-    name: 'session',
-    keys: [crypto.randomBytes(32).toString('hex')],
+// app1.use(cookieSession({
+//     name: 'session',
+//     keys: [crypto.randomBytes(32).toString('hex')],
+//
+//     // Cookie Options
+//     maxAge: 24 * 60 * 60 * 1000 // 24 hours
+// }))
+// app1.use(cookieParser())
 
-    // Cookie Options
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+app1.use(session({
+    secret: 'keyboard cat',
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: false }
 }))
 app1.use(cookieParser())
 

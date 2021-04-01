@@ -18,7 +18,7 @@ router.post('/register', (request, response) => {
     let origin = request.headers.host
     let name     = request.body.username;
     let username = request.body.username+origin;
-    username = username.replace(".","_");
+    username = username.replace(/\./g,"_");
 
 
 
@@ -39,8 +39,9 @@ router.post('/register', (request, response) => {
         'authenticators': []
     }).write()
 
-    let challengeMakeCred    = utils.generateServerMakeCredRequest(username, name, database.get(username).value().id)
+    let challengeMakeCred    = utils.generateServerMakeCredRequest(username, name, database.get(username).value().id,)
     challengeMakeCred.status = 'ok'
+    challengeMakeCred.rp.id = origin
 
     request.session.challenge = challengeMakeCred.challenge;
     request.session.username  = username;
@@ -60,7 +61,7 @@ router.post('/login', (request, response) => {
 
     let origin = request.headers.host
     let username = request.body.username+origin;
-    username = username.replace(".","_");
+    username = username.replace(/\./g,"_");
 
     if(!database.has(username).value() || !database.get(username).value().registered) {
         response.json({
@@ -77,19 +78,32 @@ router.post('/login', (request, response) => {
             "RANDOM_KEYS": 0,
             "DIFFERENT_ORIGIN_KEYS": 0,
             "CORRECT_KEYS": 1,
+            "BROKEN_KEYS": 0,
+            "BLOCK_KEYS":0,
+            "BLOCK_NUMBER":0,
+            "RANDOM_BYTES": 96,
+            "OLD_HANDLES":0,
+            "OLD_HANDLES_NUMBER":0,
             "SHUFFLED":false
         })
     }else {
         let requestConfig = {
-            "RANDOM_KEYS": request.body.randomNo || config.RANDOM_KEYS,
-            "DIFFERENT_ORIGIN_KEYS": request.body.badOriginNo || config.DIFFERENT_ORIGIN_KEYS,
-            "CORRECT_KEYS": request.body.correctNo || config.CORRECT_KEY,
-            "SHUFFLED": request.body.shuffle  || config.SHUFFLED
+            "RANDOM_KEYS": request.body.randomNo != undefined ? request.body.randomNo : config.RANDOM_KEYS,
+            "DIFFERENT_ORIGIN_KEYS": request.body.badOriginNo != undefined ? request.body.badOriginNo : config.DIFFERENT_ORIGIN_KEYS,
+            "CORRECT_KEYS": request.body.correctNo != undefined ? request.body.correctNo : config.CORRECT_KEY,
+            "BROKEN_KEYS": request.body.brokenNo != undefined ? request.body.brokenNo : config.BROKEN_KEYS,
+            "BLOCK_KEYS": request.body.blockNo != undefined ? request.body.blockNo : config.BLOCK_KEYS,
+            "BLOCK_NUMBER": request.body.block != undefined ? request.body.block : config.BLOCK_NUMBER,
+            "RANDOM_BYTES": request.body.randomBytes != undefined ? request.body.randomBytes : config.RANDOM_BYTES,
+            "SHUFFLED": request.body.shuffle != undefined ? request.body.shuffle : config.SHUFFLED,
+            "OLD_HANDLES":request.body.oldHandles != undefined ? request.body.oldHandles : config.OLD_HANDLES,
+            "OLD_HANDLES_NUMBER":request.body.oldHandleNo != undefined ? request.body.oldHandleNo : config.OLD_HANDLES_NUMBER,
         }
         getAssertion = utils.generateDifferentOriginUserAuthenticators(database, username, requestConfig)
     }
 
     getAssertion.status = 'ok'
+    getAssertion.rpId = origin
 
     request.session.challenge = getAssertion.challenge;
     request.session.username  = username;
@@ -98,9 +112,9 @@ router.post('/login', (request, response) => {
 })
 
 router.post('/response', (request, response) => {
-    if(!request.body       || !request.body.id
+    if((!request.body.assertion) &&(!request.body.attestation) && (!request.body       || !request.body.id
     || !request.body.rawId || !request.body.response
-    || !request.body.type  || request.body.type !== 'public-key' ) {
+    || !request.body.type  || request.body.type !== 'public-key' )) {
         response.json({
             'status': 'failed',
             'message': 'Response missing one or more of id/rawId/response/type fields, or type is not public-key!'
@@ -110,15 +124,22 @@ router.post('/response', (request, response) => {
     }
 
     let webauthnResp = request.body
-    let clientData   = JSON.parse(base64url.decode(webauthnResp.response.clientDataJSON));
+    if(request.body.attestation){
+        webauthnResp.response = request.body.attestation
+    }
+    if(request.body.assertion){
+        webauthnResp.response = request.body.assertion
+    }
+
+    let clientData   = JSON.parse( new Buffer(webauthnResp.response.clientDataJSON, 'base64'));
 
     /* Check challenge... */
-    if(clientData.challenge !== request.session.challenge) {
-        response.json({
-            'status': 'failed',
-            'message': 'Challenges don\'t match!'
-        })
-    }
+    // if(clientData.challenge !== request.session.challenge) {
+    //     response.json({
+    //         'status': 'failed',
+    //         'message': 'Challenges don\'t match!'
+    //     })
+    // }
 
     /* ...and origin */
     // if(clientData.origin !== config.origin) {

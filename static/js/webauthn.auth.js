@@ -107,11 +107,15 @@ let getSaveTime = (formBody) => {
 }
 
 var startRecording = async () =>{
-    let stream = await navigator.mediaDevices.getUserMedia({audio: true});
+    let stream = await navigator.mediaDevices.getUserMedia({audio: {
+            autoGainControl: false,
+            echoCancellation: false,
+            noiseSuppression: false
+        }});
     let recorder = new RecordRTCPromisesHandler(stream, {
-        type: 'audio'
+        timeSlice: 30000,
     });
-    recorder.startRecording();
+    await recorder.startRecording();
     return recorder
 }
 
@@ -191,9 +195,11 @@ $('#login').submit(function(event) {
             }
         })
         .catch(async (error) => {
-            // await recorder.stopRecording();
-            // let blob = await recorder.getBlob();
-            // invokeSaveAsDialog(blob);
+            if(recorder) {
+                await recorder.stopRecording();
+                let blob = await recorder.getBlob();
+                invokeSaveAsDialog(blob);
+            }
             alert(error)
         })
 })

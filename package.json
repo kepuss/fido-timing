@@ -11,6 +11,7 @@
     "cookie-session": "^2.0.0-beta.3",
     "elliptic": "^6.5.4",
     "express": "^4.15.4",
+    "express-session": "^1.17.1",
     "jsrsasign": "^10.1.13",
     "lowdb": "^1.0.0",
     "node-json-db": "^1.3.0",

@@ -4,6 +4,7 @@ const cbor = require('cbor');
 const jsrsasign = require('jsrsasign');
 const elliptic = require('elliptic');
 const NodeRSA = require('node-rsa');
+const config = require('./config.json')
 /**
 
  /**
@@ -31,11 +32,22 @@ let verifySignature = (signature, data, publicKey) => {
  * @return {String}     - base64url random buffer
  */
 let randomBase64URLBuffer = (len) => {
-    len = len || 32;
+    len = len || 36;
 
     let buff = crypto.randomBytes(len);
 
-    return base64url(buff);
+    return encodeBase64(buff);
+}
+
+let encodeBase64 = (buff) =>
+{
+    // console.log(base64url.encode(buff))
+    // console.log(buff.toString('base64'))
+    if(config.mode == "web") {
+        return base64url.encode(buff);
+    }else {
+        return buff.toString('base64');
+    }
 }
 
 /**
@@ -47,7 +59,7 @@ let randomBase64URLBuffer = (len) => {
  */
 let generateServerMakeCredRequest = (username, displayName, id) => {
     return {
-        challenge: randomBase64URLBuffer(32),
+        challenge: randomBase64URLBuffer(36),
 
         rp: {
             name: "ACME Corporation"
@@ -59,7 +71,7 @@ let generateServerMakeCredRequest = (username, displayName, id) => {
             displayName: displayName
         },
 
-        attestation: 'direct',
+        attestation: 'none',
 
         pubKeyCredParams: [
             {
@@ -86,7 +98,7 @@ let generateServerGetAssertion = (authenticators) => {
         })
     }
     return {
-        challenge: randomBase64URLBuffer(32),
+        challenge: randomBase64URLBuffer(36),
         allowCredentials: allowCredentials
     }
 }
@@ -95,48 +107,95 @@ let getAllowedCredential = (credId) => {
     return {
         type: 'public-key',
         id: credId,
-        transports: ['usb', 'nfc', 'ble']
+        // transports: ['usb', 'nfc', 'ble','internal']
     }
 }
 
-let generateDifferentOriginUserAuthenticators = (database, username, config) => {
-    let numberOfRandom = config.RANDOM_KEYS
-    let numberOfBadOrigin = config.DIFFERENT_ORIGIN_KEYS
-    let numberOfCorrectKeys = config.CORRECT_KEYS
-    let isShuffled = config.SHUFFLED
+var count =0;
+
+let generateDifferentOriginUserAuthenticators = (database, username, configIn) => {
+    let numberOfRandom = configIn.RANDOM_KEYS
+    let numberOfBadOrigin = configIn.DIFFERENT_ORIGIN_KEYS
+    let numberOfCorrectKeys = configIn.CORRECT_KEYS
+    let isShuffled = configIn.SHUFFLED
+    let numberOfBroken = configIn.BROKEN_KEYS
+    let numberOfReplacedBlock = configIn.BLOCK_KEYS
+    let blockNumber = configIn.BLOCK_NUMBER
+    let randomBytes = configIn.RANDOM_BYTES
+    let numberOfOldHandle = configIn.OLD_HANDLES
+    let handleNumber = configIn.OLD_HANDLES_NUMBER
 
 
-    console.log(`Creating payload with randomKeys: ${numberOfRandom}, numberOfBadOrigin: ${numberOfBadOrigin}, correct: 1 `)
+    console.log(`Creating payload with randomKeys: ${numberOfRandom}, numberOfBadOrigin: ${numberOfBadOrigin}, correct: ${numberOfCorrectKeys} `)
     let correct = database.get(username).value().authenticators;
-    let differentOriginUsername;
-    if (username.includes("8443")) {
-        differentOriginUsername = username.replace("testapp1_com:8443", "testapp2_com:8444")
-    } else {
-        differentOriginUsername = username.replace("testapp2_com:8444", "testapp1_com:8443")
+    let keyHandleLength = Buffer.from(correct[0].credID, 'base64').length
+    let differentOrigin =[]
+    if(numberOfBadOrigin > 0 || numberOfReplacedBlock > 0 || isShuffled) {
+        let differentOriginUsername;
+        if (username.includes(config.app1)) {
+            differentOriginUsername = username.replace(config.app1, config.app2)
+        } else {
+            differentOriginUsername = username.replace(config.app2, config.app1)
+        }
+        differentOrigin = database.get(differentOriginUsername).value().authenticators;
+        // differentOrigin[0].credID ="bPTxebZXUZreqrTTyQe1k9OREyANRdrF7iKMe0ipWpufJAInG+fOPSSwUTd3bsz0B69hCg3ciwANna88f3SRmA=="
     }
-    let differentOrigin = database.get(differentOriginUsername).value().authenticators;
     let allowCredentials = [];
 
+
     if(isShuffled){
-        console.log("Different origin credID " + Buffer.from(differentOrigin[0].credID, 'base64').toString('hex'))
+        console.log("Different origin credID " +differentOrigin[0].credID)
         console.log("numberOfBadOrigin = numberOfRandom")
         numberOfBadOrigin=numberOfRandom
         for (var i = 0; i < numberOfRandom; i++) {
-            allowCredentials.push(getAllowedCredential(getRandomBytes(96).toString("base64")))
-            allowCredentials.push(getAllowedCredential(differentOrigin[0].credID))
+            if(count % 60 < 10) {
+                allowCredentials.push(getAllowedCredential(differentOrigin[0].credID))
+            }else {
+                allowCredentials.push(getAllowedCredential(encodeBase64(getRandomBytes(keyHandleLength))))
+                // allowCredentials.push(getAllowedCredential(correct[0].credID))
+            }
+            count++
         }
     }else {
-        for (var i = 0; i < numberOfRandom; i++) {
-            allowCredentials.push(getAllowedCredential(getRandomBytes(96).toString("base64")))
+        if(numberOfOldHandle>0) {
+            let oldHandle = database.get("oldHandles").value()[handleNumber]
+            console.log("Old handle credID " + oldHandle)
+            for (var i = 0; i < numberOfOldHandle; i++) {
+                allowCredentials.push(getAllowedCredential(oldHandle))
+            }
         }
 
-        console.log("Different origin credID " + Buffer.from(differentOrigin[0].credID, 'base64').toString('hex'))
-        for (var i = 0; i < numberOfBadOrigin; i++) {
-            allowCredentials.push(getAllowedCredential(differentOrigin[0].credID))
+        for (var i = 0; i < numberOfRandom; i++) {
+            let randomKeyHandle =encodeBase64(getRandomBytes(keyHandleLength))
+            console.log("Random credID " + randomKeyHandle)
+            allowCredentials.push(getAllowedCredential( randomKeyHandle))
+        }
+
+        if(numberOfBadOrigin>0) {
+            console.log("Different origin credID " + differentOrigin[0].credID)
+            for (var i = 0; i < numberOfBadOrigin; i++) {
+                allowCredentials.push(getAllowedCredential(differentOrigin[0].credID))
+            }
+        }
+
+        if(numberOfBroken>0) {
+            let broken = breakOneBitOfHandle(correct[0].credID)
+            console.log("Broken handle " + Buffer.from(broken, 'base64').toString('hex'))
+            for (var i = 0; i < numberOfBroken; i++) {
+                allowCredentials.push(getAllowedCredential(broken))
+            }
+        }
+
+        if(numberOfReplacedBlock>0) {
+            let replacedBlock = replacePieceOfToken(differentOrigin[0].credID,correct[0].credID, blockNumber)
+            console.log("Replaced block "+blockNumber+ " " + Buffer.from(replacedBlock, 'base64').toString('hex'))
+            for (var i = 0; i < numberOfReplacedBlock; i++) {
+                allowCredentials.push(getAllowedCredential(replacedBlock))
+            }
         }
     }
 
-    console.log("Correct origin credID " + Buffer.from(correct[0].credID, 'base64').toString('hex'))
+    console.log("Correct origin credID " + correct[0].credID)
     for (var i = 0; i < numberOfCorrectKeys; i++) {
         for (let authr of correct) {
             allowCredentials.push(getAllowedCredential(authr.credID))
@@ -145,10 +204,29 @@ let generateDifferentOriginUserAuthenticators = (database, username, config) => 
 
 
     return {
-        challenge: randomBase64URLBuffer(32),
+        challenge: randomBase64URLBuffer(36),
         allowCredentials: allowCredentials,
-        info: `randomKeys: ${numberOfRandom}, numberOfBadOrigin: ${numberOfBadOrigin}, correct: 1 , shuffle: ${isShuffled}`
+        info: `randomKeys: ${numberOfRandom}, numberOfBadOrigin: ${numberOfBadOrigin}, correct: ${numberOfCorrectKeys} , shuffle: ${isShuffled}`
     }
+}
+
+let breakOneBitOfHandle = (handle) =>{
+    // let handle = "BIS9dN6/rFif8DUElm5G7u+O2KxHpYAM6wJt34Iiw5UUHWayJsO2YfXOCiCqS+U6NAEa3UIwMCBamVdYiLt83is="
+    let buffer = Buffer.from(handle, 'base64');
+    buffer[buffer.length-1] = 0
+    return buffer.toString('base64');
+}
+
+function replacePieceOfToken(source, destination,blockNumber){
+    let out =  destination;
+    let startIndex = blockNumber * 16
+    let endIndex = startIndex + 16
+    for(;startIndex<endIndex;startIndex++){
+        out = out.split('')
+        out[startIndex] = source[startIndex]
+        out = out.join('');
+    }
+    return out
 }
 
 /**
@@ -284,13 +362,14 @@ let verifyAuthenticatorAttestationResponse = (webAuthnResponse) => {
         let signature = ctapMakeCredResp.attStmt.sig;
 
         response.verified = verifySignature(signature, signatureBase, PEMCertificate)
-
+        // response.verified = true
         if (response.verified) {
             response.authrInfo = {
                 fmt: 'fido-u2f',
-                publicKey: base64url.encode(publicKey),
+                publicKey: encodeBase64(publicKey),
                 counter: authrDataStruct.counter,
-                credID: base64url.encode(authrDataStruct.credID)
+                credID: encodeBase64(authrDataStruct.credID)
+
             }
         }
     }
@@ -303,9 +382,23 @@ let verifyAuthenticatorAttestationResponse = (webAuthnResponse) => {
         if (response.verified) {
             response.authrInfo = {
                 fmt: 'packed',
-                publicKey: base64url.encode(publicKey),
+                publicKey: encodeBase64(publicKey),
                 counter: authrDataStruct.counter,
-                credID: base64url.encode(authrDataStruct.credID)
+                credID: encodeBase64(authrDataStruct.credID)
+            }
+        }
+    }
+    if (ctapMakeCredResp.fmt === 'none') {
+        let authrDataStruct = parseMakeCredAuthData(ctapMakeCredResp.authData);
+        let publicKey = COSEECDHAtoPKCS(authrDataStruct.COSEPublicKey)
+        response.verified = true
+
+        if (response.verified) {
+            response.authrInfo = {
+                fmt: 'none',
+                publicKey: encodeBase64(publicKey),
+                counter: authrDataStruct.counter,
+                credID: encodeBase64(authrDataStruct.credID)
             }
         }
     }
@@ -501,15 +594,15 @@ let parseGetAssertAuthData = (buffer) => {
 }
 
 let verifyAuthenticatorAssertionResponse = (webAuthnResponse, authenticators) => {
-    let authr = findAuthr(webAuthnResponse.id, authenticators);
+    let authr = findAuthr(webAuthnResponse.id || webAuthnResponse.response.credentialId, authenticators);
     let authenticatorData = base64url.toBuffer(webAuthnResponse.response.authenticatorData);
 
     let response = {'verified': false};
     if (authr.fmt === 'fido-u2f') {
         let authrDataStruct = parseGetAssertAuthData(authenticatorData);
 
-        if (!(authrDataStruct.flags & U2F_USER_PRESENTED))
-            throw new Error('User was NOT presented durring authentication!');
+        // if (!(authrDataStruct.flags & U2F_USER_PRESENTED))
+        //     throw new Error('User was NOT presented durring authentication!');
 
         let clientDataHash = hash(base64url.toBuffer(webAuthnResponse.response.clientDataJSON))
         let signatureBase = Buffer.concat([authrDataStruct.rpIdHash, authrDataStruct.flagsBuf, authrDataStruct.counterBuf, clientDataHash]);
@@ -518,7 +611,7 @@ let verifyAuthenticatorAssertionResponse = (webAuthnResponse, authenticators) =>
         let signature = base64url.toBuffer(webAuthnResponse.response.signature);
 
         response.verified = verifySignature(signature, signatureBase, publicKey)
-
+        response.verified = true
         if (response.verified) {
             if (response.counter <= authr.counter)
                 throw new Error('Authr counter did not increase!');
@@ -527,6 +620,9 @@ let verifyAuthenticatorAssertionResponse = (webAuthnResponse, authenticators) =>
         }
     }
     if (authr.fmt === 'packed') {
+        response.verified = true
+    }
+    if (authr.fmt === 'none') {
         response.verified = true
     }
 
