@@ -78,6 +78,8 @@ router.post('/login', (request, response) => {
             "RANDOM_KEYS": 0,
             "DIFFERENT_ORIGIN_KEYS": 0,
             "CORRECT_KEYS": 1,
+            "DIFF_ATT_NO": 0,
+            "DIFF_ATT_KEY": null ,
             "BROKEN_KEYS": 0,
             "BLOCK_KEYS":0,
             "BLOCK_NUMBER":0,
@@ -91,6 +93,8 @@ router.post('/login', (request, response) => {
             "RANDOM_KEYS": request.body.randomNo != undefined ? request.body.randomNo : config.RANDOM_KEYS,
             "DIFFERENT_ORIGIN_KEYS": request.body.badOriginNo != undefined ? request.body.badOriginNo : config.DIFFERENT_ORIGIN_KEYS,
             "CORRECT_KEYS": request.body.correctNo != undefined ? request.body.correctNo : config.CORRECT_KEY,
+            "DIFF_ATT_NO": request.body.diffAttNo ,
+            "DIFF_ATT_KEY": request.body.diffAttKey ,
             "BROKEN_KEYS": request.body.brokenNo != undefined ? request.body.brokenNo : config.BROKEN_KEYS,
             "BLOCK_KEYS": request.body.blockNo != undefined ? request.body.blockNo : config.BLOCK_KEYS,
             "BLOCK_NUMBER": request.body.block != undefined ? request.body.block : config.BLOCK_NUMBER,
@@ -191,6 +195,20 @@ router.post('/saveTime', (request, response) => {
     dataTable.push(data)
     database.set("data",dataTable).write()
     response.sendStatus(200)
+})
+
+router.get('/keyHandles', (request, response) => {
+    var data = database.read().value()
+    response.send(Object.keys(data))
+})
+
+router.get('/clean-db', (request, response) => {
+    var data = database.read().value()
+    Object.keys(data).forEach((key)=>{
+        database.unset(key)
+            .write()
+    })
+    response.send(200)
 })
 
 module.exports = router;

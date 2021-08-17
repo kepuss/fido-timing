@@ -5,6 +5,14 @@ const jsrsasign = require('jsrsasign');
 const elliptic = require('elliptic');
 const NodeRSA = require('node-rsa');
 const config = require('./config.json')
+
+
+
+
+Array.prototype.insert = function ( index, item ) {
+    this.splice( index, 0, item );
+};
+
 /**
 
  /**
@@ -124,13 +132,15 @@ let generateDifferentOriginUserAuthenticators = (database, username, configIn) =
     let randomBytes = configIn.RANDOM_BYTES
     let numberOfOldHandle = configIn.OLD_HANDLES
     let handleNumber = configIn.OLD_HANDLES_NUMBER
+    let numberOfDiffAtt = configIn.DIFF_ATT_NO
+    let diffAttKey = configIn.DIFF_ATT_KEY
 
 
     console.log(`Creating payload with randomKeys: ${numberOfRandom}, numberOfBadOrigin: ${numberOfBadOrigin}, correct: ${numberOfCorrectKeys} `)
     let correct = database.get(username).value().authenticators;
     let keyHandleLength = Buffer.from(correct[0].credID, 'base64').length
     let differentOrigin =[]
-    if(numberOfBadOrigin > 0 || numberOfReplacedBlock > 0 || isShuffled) {
+    if(numberOfBadOrigin > 0 || numberOfReplacedBlock > 0 ) {
         let differentOriginUsername;
         if (username.includes(config.app1)) {
             differentOriginUsername = username.replace(config.app1, config.app2)
@@ -143,26 +153,32 @@ let generateDifferentOriginUserAuthenticators = (database, username, configIn) =
     let allowCredentials = [];
 
 
-    if(isShuffled){
-        console.log("Different origin credID " +differentOrigin[0].credID)
-        console.log("numberOfBadOrigin = numberOfRandom")
-        numberOfBadOrigin=numberOfRandom
-        for (var i = 0; i < numberOfRandom; i++) {
-            if(count % 60 < 10) {
-                allowCredentials.push(getAllowedCredential(differentOrigin[0].credID))
-            }else {
-                allowCredentials.push(getAllowedCredential(encodeBase64(getRandomBytes(keyHandleLength))))
-                // allowCredentials.push(getAllowedCredential(correct[0].credID))
-            }
-            count++
-        }
-    }else {
+    // if(isShuffled){
+    //     console.log("Different origin credID " +differentOrigin[0].credID)
+    //     console.log("numberOfBadOrigin = numberOfRandom")
+    //     numberOfBadOrigin=numberOfRandom
+    //     for (var i = 0; i < numberOfRandom; i++) {
+    //         if(count % 60 < 10) {
+    //             allowCredentials.push(getAllowedCredential(differentOrigin[0].credID))
+    //         }else {
+    //             allowCredentials.push(getAllowedCredential(encodeBase64(getRandomBytes(keyHandleLength))))
+    //             // allowCredentials.push(getAllowedCredential(correct[0].credID))
+    //         }
+    //         count++
+    //     }
+    // }else {
         if(numberOfOldHandle>0) {
             let oldHandle = database.get("oldHandles").value()[handleNumber]
             console.log("Old handle credID " + oldHandle)
             for (var i = 0; i < numberOfOldHandle; i++) {
                 allowCredentials.push(getAllowedCredential(oldHandle))
             }
+        }
+
+        for (var i = 0; i < numberOfDiffAtt; i++) {
+            let differentAtt = database.get(diffAttKey).value().authenticators;
+            console.log("Different att credID "+diffAttKey+" " + differentAtt[0].credID)
+            allowCredentials.push(getAllowedCredential(differentAtt[0].credID))
         }
 
         for (var i = 0; i < numberOfRandom; i++) {
@@ -192,6 +208,13 @@ let generateDifferentOriginUserAuthenticators = (database, username, configIn) =
             for (var i = 0; i < numberOfReplacedBlock; i++) {
                 allowCredentials.push(getAllowedCredential(replacedBlock))
             }
+        }
+    // }
+
+    if(isShuffled){
+        var limit = allowCredentials.length
+        for( var i =1; i<limit*2;i=i+2){
+            allowCredentials.insert(i,getAllowedCredential(encodeBase64(getRandomBytes(keyHandleLength))))
         }
     }
 

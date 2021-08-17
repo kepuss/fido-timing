@@ -56,6 +56,22 @@
                         <input type="text" name="username" value="test">
                           <label for="randomNo">Number of random keys</label>
                           <input type="text" name="randomNo" value="0">
+
+                          <div style="display: flex">
+                              <div style="display: flex; flex-direction: column; width: 40%; margin-right: 10px">
+                          <label for="diffAttNo">Number of keys from different attestation</label>
+                          <input type="text" name="diffAttNo" value="0">
+                              </div>
+                              <div style="display: flex; flex-direction: column; width: 40%; margin-right: 10px">
+                              <label for="selectDiffAttNo">Select key</label>
+                              <select name="selectDiffAttNo" id="selectDiffAttNo" ></select>
+                          </div>
+                              <div style="display: flex; flex-direction: column; width: 10%; align-self: end;">
+                                  <button onclick="cleanKeyHandleDb()">Clean db</button>
+                              </div>
+                          </div>
+
+
                           <label for="badOriginNo">Number of bad origin keys</label>
                           <input type="text" name="badOriginNo" value="0">
                           <label for="correctNo">Number of correct keys</label>
@@ -80,6 +96,9 @@
                         <table id="timeTable">
                         </table>
                     </div>
+                    <span>Results: <span id="resultsNumber"></span></span>
+                    <button onclick="exportData()">Export results</button>
+                    <br/>
                     <a href="#" id="toRegistration">Not registered yet? Registration</a>
                 </div>
             </div>
@@ -104,6 +123,7 @@
     <script src="js/webauthn.auth.js"></script>
     <script>
         $(document).ready(() => {
+            getKeyHandleOptions()
             checkIfLoggedIn()
             .then((response) => {
                 if(response)

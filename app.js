@@ -11,6 +11,8 @@ const defaultroutes = require('./routes/default');
 const passwordauth  = require('./routes/password');
 const webuathnauth  = require('./routes/webauthn.js');
 const session = require('express-session');
+const compression = require('compression')
+
 
 var fs = require('fs');
 var http = require('http');
@@ -19,6 +21,7 @@ var https = require('https');
 const app           = express();
 
 app.use(bodyParser.json());
+app.use(compression());
 
 /* ----- session ----- */
 app.use(session({

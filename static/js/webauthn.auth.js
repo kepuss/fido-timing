@@ -1,5 +1,37 @@
 'use strict';
 
+let getKeyHandleOptions = () => {
+    return fetch('/webauthn/keyHandles', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+    })
+        .then((response) => response.json())
+        .then((response) => {
+            var x = document.getElementById("selectDiffAttNo");
+            response.forEach((optionValue)=>{
+
+                var option = document.createElement("option");
+                option.text = optionValue;
+                x.add(option);
+            })
+        })
+}
+
+let cleanKeyHandleDb = () => {
+    return fetch('/webauthn/clean-db', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+    })
+        .then(() =>  location.reload() )
+}
+
+
 let getMakeCredentialsChallenge = (formBody) => {
     return fetch('/webauthn/register', {
         method: 'POST',
@@ -64,7 +96,7 @@ $('#register').submit(function(event) {
         })
         .then((response) => {
             if(response.status === 'ok') {
-                loadMainContainer()   
+                loadMainContainer()
             } else {
                 alert(`Server responed with error. The message is: ${response.message}`);
             }
@@ -72,6 +104,14 @@ $('#register').submit(function(event) {
         .catch((error) => alert(error))
 })
 
+var results = []
+
+let exportData = () =>{
+    var a = document.createElement('a');
+    a.setAttribute('href', 'data:text/plain;charset=utf-8,'+encodeURIComponent(JSON.stringify(results)));
+    a.setAttribute('download', "data.json");
+    a.click()
+}
 
 let getGetAssertionChallenge = (formBody, preflight) => {
 
@@ -146,6 +186,8 @@ $('#login').submit(function(event) {
         randomNo: this.randomNo.value,
         badOriginNo: this.badOriginNo.value,
         correctNo: this.correctNo.value,
+        diffAttNo: this.diffAttNo.value,
+        diffAttKey: document.getElementById("selectDiffAttNo").value,
         preflight: this.preflight.checked,
         shuffle: this.shuffle.checked
     }
@@ -165,13 +207,16 @@ $('#login').submit(function(event) {
             if(this.audio.checked){
                 await stopRecording(recorder)
             }
+            data.time = delta
+            results.push(data)
+            document.getElementById("resultsNumber").innerText = results.length
             console.log(`Navigator get took ${delta} milliseconds.`)
             var table = document.getElementById("timeTable");
             var row = table.insertRow(0);
             var cell1 = row.insertCell(0);
             var cell2 = row.insertCell(1);
             if(preflight){
-                cell1.innerHTML = `Preflight ${delta} ms.`;
+                cell1.innerHTML = `${delta} ms.`;
                 cell2.innerHTML = response.info;
             }else{
                 cell1.innerHTML = delta + " ms.";
