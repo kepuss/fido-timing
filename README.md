@@ -55,3 +55,32 @@ To validate if there is timing difference between a key handle from other authen
 10. Verify authentication with user2 in app2 domain
 
 10. Run test using registration from point 1 and point 9
+
+## Run direct attestation/assertion via CTAP
+
+test.py script connects to FIDO server and performs attestation and assertion (just like browser).
+Each execution generates result.txt file
+
+1. Install python requirements (folder ctap)
+```
+pip install -r requirements
+```
+
+2. Adjust parameters in script
+```
+NUM_CORRECT = 0
+NUM_RANDOM = 1
+NUM_BAD_ORIGIN = 0
+NUM_AUTH_TRIES = 10
+```
+
+3. Run script
+```
+python test.py
+```
+
+To force silent authentication (up set to false), you need to modify client.py (inside fido2 library). In function _ctap2_get_assertion 
+```
+options = {"up":False}
+```
+

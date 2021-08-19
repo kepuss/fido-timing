@@ -267,7 +267,7 @@ let hash = (data) => {
  * @return {Buffer}               - RAW PKCS encoded public key
  */
 let COSEECDHAtoPKCS = (COSEPublicKey) => {
-    /* 
+    /*
        +------+-------+-------+---------+----------------------------------+
        | name | key   | label | type    | description                      |
        |      | type  |       |         |                                  |
@@ -365,9 +365,22 @@ let parseMakeCredAuthData = (buffer) => {
     return {rpIdHash, flagsBuf, flags, counter, counterBuf, aaguid, credID, COSEPublicKey}
 }
 
+let getMapData = (data) => {
+    return {
+        fmt: data.get(1),
+        authData: data.get(2),
+        attStmt: data.get(3)
+    }
+
+}
+
 let verifyAuthenticatorAttestationResponse = (webAuthnResponse) => {
     let attestationBuffer = base64url.toBuffer(webAuthnResponse.response.attestationObject);
     let ctapMakeCredResp = cbor.decodeAllSync(attestationBuffer)[0];
+
+    if(ctapMakeCredResp instanceof Map){
+        ctapMakeCredResp = getMapData(ctapMakeCredResp)
+    }
 
     let response = {'verified': false};
     if (ctapMakeCredResp.fmt === 'fido-u2f') {
@@ -501,7 +514,9 @@ let hash2 = (alg, message) => {
 let verifyPackedAttestation = (webAuthnResponse) => {
     let attestationBuffer = base64url.toBuffer(webAuthnResponse.response.attestationObject);
     let attestationStruct = cbor.decodeAllSync(attestationBuffer)[0];
-
+    if(attestationStruct instanceof Map){
+        attestationStruct = getMapData(attestationStruct)
+    }
     let authDataStruct = parseAuthData(attestationStruct.authData);
 
     let clientDataHashBuf = hash2('sha256', base64url.toBuffer(webAuthnResponse.response.clientDataJSON));
