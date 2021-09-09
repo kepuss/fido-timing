@@ -79,8 +79,42 @@ NUM_AUTH_TRIES = 10
 python test.py
 ```
 
-To force silent authentication (up set to false), you need to modify client.py (inside fido2 library). In function _ctap2_get_assertion 
+To force silent authentication (up set to false), you need to modify client.py (inside fido2 library). 
+
+To find library path run in python console
 ```
-options = {"up":False}
+import fido2
+print fido2.__file__
 ```
 
+In function _ctap2_get_assertion  (line 577) add up flag to False
+```
+        if uv:
+            options = {"uv": True}
+        else:
+            options = {"up":False}
+```
+
+
+## Testing procedure
+1. Register token with user "test1" on app1 and app2
+
+2. Check if authn works
+
+3. Reset token in Chrome
+
+4. Check if authn doesn't work
+
+5. Register token with user "test2" on app1 and app2
+
+6. Check time of auth for test1app1 (Random key handle test)
+
+7. Check time for bad origin
+
+8. Use python test to check silent authn times
+
+9. Run test NUM_AUTH_TRIES = 1000, NUM_CORRECT = 1, for user test1 (Random key handle test)
+
+10. Run test NUM_AUTH_TRIES = 1000, NUM_BAD_ORIGIN = 1, for user test2 (Bad origin key handle test)
+
+11. Use gen_plot.py to generate diagram

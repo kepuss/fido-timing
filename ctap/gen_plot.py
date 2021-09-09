@@ -13,8 +13,8 @@ def generateData(files):
         key_name = lines[0].strip()
         config = lines[2].split(",")
         is_correct = int(config[0]) > 0
-        if is_correct:
-            continue
+        # if is_correct:
+        #     continue
         is_random = int(config[1]) > 0
         # random_bytes = int(config[7])
         is_badorigin = int(config[2]) > 0
@@ -23,12 +23,12 @@ def generateData(files):
         # is_block = int(config[5]) > 0
         # blocks = int(config[6])
 
-        lines = [float(l) for l in lines[4:]]
+        lines = [float(l) for l in lines[5:]]
         median = np.median(lines)
         mean = np.mean(lines)
         name = ""
         if is_correct:
-            name = "Correct\nkey handle"
+            name = "Random\nkey handle"
         if is_random:
             name = "Random\nkey handle"
             # name="Random\nkey handle\n (length "+str(random_bytes)+")"
